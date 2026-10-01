@@ -205,9 +205,3 @@ Full request/response schemas in [`backend/README.md`](./backend/README.md).
 
 ---
 
-## Academic Disclaimer
-
-> [!CAUTION]
-> This is an **educational implementation** built for a CNS course assignment. It demonstrates internal algorithm mechanics using small, human-readable parameters.
->
-> **Do not use this code for real security.** For production cryptography, use audited libraries with appropriate parameters (AES-GCM, RSA-OAEP with 2048-bit+ keys, or post-quantum schemes).

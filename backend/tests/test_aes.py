@@ -12,7 +12,9 @@ from app.algorithms.symmetric.aes import (
     inv_mix_columns,
     add_round_key,
     rot_word,
-    sub_word
+    sub_word,
+    S_BOX,
+    INV_S_BOX,
 )
 from app.utils.encoding import (
     hex_to_bytes,
@@ -123,3 +125,15 @@ def test_aes_service():
 
     resp_dec = AESService.decrypt(NIST_EXPECTED_CIPHERTEXT_HEX, NIST_KEY_HEX)
     assert resp_dec.plaintext_hex == NIST_PLAINTEXT_HEX
+
+def test_sbox_is_valid_bijection():
+    """Regression test: S_BOX and INV_S_BOX must each be a permutation of 0-255.
+    Any duplicate or missing entry indicates a table transcription error.
+    """
+    assert len(S_BOX) == 256, "S_BOX must have exactly 256 entries"
+    assert len(INV_S_BOX) == 256, "INV_S_BOX must have exactly 256 entries"
+    assert sorted(S_BOX) == list(range(256)), "S_BOX values must be a permutation of 0-255 (no duplicates)"
+    assert sorted(INV_S_BOX) == list(range(256)), "INV_S_BOX values must be a permutation of 0-255 (no duplicates)"
+    # They must be mutual inverses: INV_S_BOX[S_BOX[i]] == i for all i
+    for i in range(256):
+        assert INV_S_BOX[S_BOX[i]] == i, f"INV_S_BOX[S_BOX[{i}]] = {INV_S_BOX[S_BOX[i]]}, expected {i}"

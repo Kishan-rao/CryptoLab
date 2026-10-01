@@ -1,52 +1,74 @@
 # Cryptography Algorithm Visualizer & Demonstrator
 
-An interactive full-stack academic platform developed for the **Cryptography and Network Security (CNS)** course. This application visualizes the internal operations, intermediate state transitions, and underlying mathematical mechanisms of three foundational cryptographic paradigms:
+> **Academic Project — Cryptography and Network Security (CNS)**
 
-1. **Vigenère Cipher** — Classical Cryptography (Polyalphabetic substitution over $\mathbb{Z}_{26}$)
-2. **AES-128** — Symmetric Cryptography (Advanced Encryption Standard FIPS-197, 128-bit blocks, 10 rounds)
-3. **RSA** — Asymmetric Cryptography (Public-key cryptosystem based on integer factorization)
+An interactive full-stack platform that visualizes the internal operations, intermediate state transitions, and underlying mathematical foundations of three foundational cryptographic paradigms:
+
+| Algorithm | Category | Standard |
+|---|---|---|
+| **Vigenère Cipher** | Classical — Polyalphabetic substitution | Historical |
+| **AES-128** | Symmetric — Block cipher | NIST FIPS-197 |
+| **RSA** | Asymmetric — Public-key cryptosystem | PKCS#1 / RFC 8017 |
 
 > [!IMPORTANT]
-> **Strict Implementation Guarantee**: All cryptographic algorithms and mathematical transformations (modular arithmetic, S-box substitution, Galois Field $\text{GF}(2^8)$ multiplication, Key Expansion, Extended Euclidean Algorithm, and modular exponentiation) are implemented **completely from scratch in pure Python**. No black-box cryptographic libraries (e.g. `cryptography`, `pycryptodome`, or OpenSSL wrappers) are used for encryption or decryption.
+> **Zero-library cryptographic implementations.** Every transformation — S-box substitution, Galois Field $\text{GF}(2^8)$ multiplication, Key Expansion, Extended Euclidean Algorithm, and modular exponentiation — is implemented **from scratch in pure Python**. No `cryptography`, `pycryptodome`, or OpenSSL wrappers are used for encryption or decryption.
+
+---
+
+## Table of Contents
+
+1. [Project Objectives](#1-project-objectives)
+2. [Technology Stack](#2-technology-stack)
+3. [Architecture](#3-core-architecture)
+4. [Project Structure](#4-project-structure)
+5. [Cryptographic Theory](#5-cryptographic-theory--mathematical-foundations)
+6. [NIST Test Vector](#6-official-aes-128-known-answer-test-vector)
+7. [REST API Reference](#7-rest-api-documentation)
+8. [Quick Start](#8-quick-start)
+9. [Running Tests](#9-running-tests)
+10. [Limitations & Future Work](#10-limitations--future-enhancements)
+11. [Academic Disclaimer](#11-academic-disclaimer)
 
 ---
 
 ## 1. Project Objectives
-- Bridge the gap between abstract cryptographic mathematics and tangible execution steps.
-- Provide step-by-step transparency into classical shifts, symmetric state matrices, and asymmetric modular exponentiation.
-- Maintain rigorous separation of concerns between algorithms, service layers, REST APIs, and presentation components.
-- Validate cryptographic correctness against standardized test vectors (e.g., official NIST FIPS-197 KAT).
+
+- Bridge the gap between abstract cryptographic mathematics and tangible, step-by-step execution.
+- Provide full transparency into classical shifts, symmetric state matrices, and asymmetric modular exponentiation.
+- Maintain rigorous separation of concerns between algorithms, service layers, REST APIs, and presentation.
+- Validate cryptographic correctness against standardised test vectors (NIST FIPS-197 KAT).
 
 ---
 
 ## 2. Technology Stack
 
 ### Frontend
-- **Framework**: React 18 (Vite build tool)
-- **Routing**: React Router DOM v6
-- **Styling**: Tailwind CSS with custom glassmorphism and monospace typography
-- **HTTP Client**: Axios
-- **Icons**: Lucide React
+| Tool | Version | Purpose |
+|---|---|---|
+| React | 18 | UI component framework |
+| Vite | 6 | Build tool & dev server |
+| React Router DOM | v6 | Client-side routing |
+| Tailwind CSS | 3 | Utility-first styling |
+| Axios | latest | HTTP REST client |
+| Lucide React | latest | Icon library |
 
 ### Backend
-- **Language**: Python 3.13
-- **Framework**: FastAPI
-- **Data Validation & Schemas**: Pydantic v2
-- **ASGI Server**: Uvicorn
-
-### Testing & Verification
-- **Test Runner**: Pytest 9.x
-- **Integration Client**: HTTPX / Starlette TestClient
+| Tool | Version | Purpose |
+|---|---|---|
+| Python | 3.10+ | Core language |
+| FastAPI | latest | Async REST API framework |
+| Pydantic | v2 | Schema validation |
+| Uvicorn | latest | ASGI server |
+| Pytest | 9.x | Test runner |
+| HTTPX / TestClient | latest | Integration test client |
 
 ---
 
 ## 3. Core Architecture
 
-The architecture adheres to a strict separation of concerns, ensuring that cryptographic algorithms remain pure Python modules independent of web frameworks:
-
 ```mermaid
 flowchart TD
-    subgraph Client ["Client Layer (Browser)"]
+    subgraph Client ["Client Layer (Browser — Port 5173)"]
         UI["React 18 Frontend\n(Vite + Tailwind CSS)"]
         AxiosClient["Axios REST Client\n(/src/services/api.js)"]
         UI --> AxiosClient
@@ -56,24 +78,29 @@ flowchart TD
         Routes["API Route Handlers\n(/app/api/routes/*)"]
         PydanticSchemas["Pydantic Validation Schemas\n(/app/schemas/*)"]
         Services["Service Orchestration Layer\n(/app/services/*)"]
-        
+
         AxiosClient -->|JSON HTTP Requests| Routes
         Routes <--> PydanticSchemas
         Routes --> Services
     end
 
     subgraph PureCrypto ["Cryptographic Algorithm Layer (Pure Python)"]
-        VigAlgo["Vigenère Cipher\n(Modular arithmetic over Z26)"]
+        VigAlgo["Vigenère Cipher\n(Modular arithmetic over Z₂₆)"]
         AESAlgo["AES-128 FIPS-197\n(S-Box, ShiftRows, MixColumns, ARK)"]
         RSAAlgo["RSA Public-Key\n(Primes, ExtGCD, ModInv, ModPow)"]
-        MathUtils["Math & GF(2^8) Utils\n(gmul, xtime, is_prime, mod_exp)"]
-        
+        MathUtils["Math & GF(2⁸) Utils\n(gmul, xtime, is_prime, mod_exp)"]
+
         Services --> VigAlgo
         Services --> AESAlgo
         Services --> RSAAlgo
         AESAlgo --> MathUtils
         RSAAlgo --> MathUtils
     end
+```
+
+**Request flow:**
+```
+HTTP Request → FastAPI Route → Service Layer → Algorithm Module → Result + Trace → Pydantic Response → React Frontend
 ```
 
 ---
@@ -87,325 +114,356 @@ CNS-Cryptography-Lab/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Navbar.jsx              # Navigation header, health status, disclaimer
-│   │   │   ├── AlgorithmCard.jsx       # Taxonomy overview cards
-│   │   │   ├── InputPanel.jsx          # Inputs with counters & presets
+│   │   │   ├── AlgorithmCard.jsx       # Taxonomy overview cards on home page
+│   │   │   ├── InputPanel.jsx          # Reusable inputs with counters & presets
 │   │   │   ├── OutputPanel.jsx         # Monospace output with copy-to-clipboard
-│   │   │   ├── StepViewer.jsx          # Tabular character-by-character trace
+│   │   │   ├── StepViewer.jsx          # Tabular character-by-character Vigenère trace
 │   │   │   └── StateMatrix.jsx         # 4×4 AES state matrix with byte inspection
 │   │   │
 │   │   ├── pages/
-│   │   │   ├── Home.jsx                # Overview & taxonomy comparison table
-│   │   │   ├── Vigenere.jsx            # Vigenère encrypt/decrypt & calculations
+│   │   │   ├── Home.jsx                # Overview & algorithm taxonomy table
+│   │   │   ├── Vigenere.jsx            # Vigenère encrypt/decrypt & step trace
 │   │   │   ├── AES.jsx                 # AES 128-bit hex visualizer & round stepper
-│   │   │   └── RSA.jsx                 # RSA interactive keygen & math traces
+│   │   │   └── RSA.jsx                 # RSA keygen, key derivation & math trace
 │   │   │
 │   │   ├── services/
-│   │   │   └── api.js                  # Axios client communicating with backend
+│   │   │   └── api.js                  # Axios client for all backend endpoints
 │   │   │
 │   │   ├── utils/
-│   │   │   └── formatters.js           # Hex formatting & validation helpers
+│   │   │   └── formatters.js           # Hex formatting, validation helpers
 │   │   │
-│   │   ├── App.jsx                     # Layout, routes, footer
-│   │   ├── main.jsx                    # React root entrypoint
-│   │   └── index.css                   # Tailwind styles & theme variables
+│   │   ├── App.jsx                     # Router, layout shell, footer
+│   │   ├── main.jsx                    # React root entry point
+│   │   └── index.css                   # Tailwind directives, glass-panel theme
 │   │
+│   ├── index.html
 │   ├── package.json
 │   ├── tailwind.config.js
 │   ├── postcss.config.js
-│   └── vite.config.js
+│   └── vite.config.js                  # Dev proxy: /api → localhost:8000
 │
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                     # FastAPI app, CORS, error handling
+│   │   ├── main.py                     # FastAPI app, CORS, validation error handler
 │   │   │
 │   │   ├── api/
 │   │   │   └── routes/
-│   │   │       ├── vigenere.py         # /api/v1/vigenere/* endpoints
-│   │   │       ├── aes.py              # /api/v1/aes/* endpoints
-│   │   │       └── rsa.py              # /api/v1/rsa/* endpoints
+│   │   │       ├── vigenere.py         # POST /api/v1/vigenere/{encrypt,decrypt}
+│   │   │       ├── aes.py              # POST /api/v1/aes/{encrypt,decrypt}
+│   │   │       └── rsa.py              # POST /api/v1/rsa/{generate-keys,encrypt,decrypt}
 │   │   │
 │   │   ├── services/
-│   │   │   ├── vigenere_service.py     # Vigenère business logic & formatting
+│   │   │   ├── vigenere_service.py     # Vigenère result packaging
 │   │   │   ├── aes_service.py          # AES round trace packaging
 │   │   │   └── rsa_service.py          # RSA keygen & step packaging
 │   │   │
 │   │   ├── algorithms/
 │   │   │   ├── classical/
-│   │   │   │   └── vigenere.py         # Pure Vigenère implementation
+│   │   │   │   └── vigenere.py         # Pure Vigenère — key norm, encrypt, decrypt, trace
 │   │   │   │
 │   │   │   ├── symmetric/
-│   │   │   │   └── aes.py              # Pure AES-128 FIPS-197 implementation
+│   │   │   │   └── aes.py              # Pure AES-128 FIPS-197 — all 10 rounds + trace
 │   │   │   │
 │   │   │   └── asymmetric/
-│   │   │       └── rsa.py              # Pure RSA implementation
+│   │   │       └── rsa.py              # Pure RSA — keygen, modular exponentiation, trace
 │   │   │
 │   │   ├── schemas/
-│   │   │   ├── vigenere.py             # Pydantic schemas for Vigenère
-│   │   │   ├── aes.py                  # Pydantic schemas for AES
-│   │   │   └── rsa.py                  # Pydantic schemas for RSA
+│   │   │   ├── vigenere.py             # Pydantic request/response schemas
+│   │   │   ├── aes.py                  # Pydantic request/response schemas
+│   │   │   └── rsa.py                  # Pydantic request/response schemas
 │   │   │
 │   │   └── utils/
-│   │       ├── encoding.py             # Hex, byte, and matrix conversions
-│   │       └── math_utils.py           # Number theory & Galois Field GF(2^8)
+│   │       ├── encoding.py             # Hex ↔ bytes ↔ 4×4 matrix conversions
+│   │       └── math_utils.py           # GCD, ExtGCD, mod_inverse, gmul, xtime, mod_exp
 │   │
 │   ├── tests/
-│   │   ├── test_vigenere.py            # Vigenère unit & roundtrip tests
-│   │   ├── test_aes.py                 # AES NIST KAT vector & transformation tests
-│   │   ├── test_rsa.py                 # RSA math & crypto tests
-│   │   └── test_api_routes.py          # REST API endpoint tests
+│   │   ├── test_vigenere.py            # Vigenère unit & roundtrip tests (7 tests)
+│   │   ├── test_aes.py                 # AES NIST KAT vector & transformation tests (10 tests)
+│   │   ├── test_rsa.py                 # RSA math & crypto tests (7 tests)
+│   │   └── test_api_routes.py          # REST API integration tests (4 tests)
 │   │
-│   ├── pytest.ini                      # Pytest configuration
-│   ├── requirements.txt                # Python backend dependencies
-│   └── README.md                       # Backend specific documentation
+│   ├── pytest.ini                      # testpaths = tests, pythonpath = .
+│   ├── requirements.txt                # Python dependencies
+│   └── README.md                       # Backend-specific documentation
 │
-├── IMPLEMENTATION_PLAN.md              # Detailed implementation strategy
-├── TASKS.md                            # Comprehensive task completion checklist
-├── README.md                           # Master project documentation
-└── .gitignore                          # Repository ignores
+├── README.md                           # ← You are here
+├── .gitignore
+└── IMPLEMENTATION_PLAN.md
 ```
 
 ---
 
 ## 5. Cryptographic Theory & Mathematical Foundations
 
-### 5.1. Vigenère Cipher (Classical Cryptography)
-The Vigenère cipher is a polyalphabetic substitution cipher based on the Latin alphabet ($A=0, B=1, \dots, Z=25$). A secret keyword is cyclically repeated across the message length.
+### 5.1 Vigenère Cipher (Classical Cryptography)
 
-#### Mathematical Formulas:
-- **Encryption**:
-  $$C_i = (P_i + K_i) \bmod 26$$
-- **Decryption**:
-  $$P_i = (C_i - K_i + 26) \bmod 26$$
-where $P_i$ is the $i$-th plaintext letter value, $C_i$ is the ciphertext letter value, and $K_i$ is the repeating keyword letter value.
+A polyalphabetic substitution cipher over the 26-letter Latin alphabet ($A=0, B=1, \dots, Z=25$). A secret keyword is cyclically repeated across the message.
 
----
+**Encryption:**
+$$C_i = (P_i + K_i) \bmod 26$$
 
-### 5.2. AES-128 (Symmetric Cryptography — FIPS-197)
-The Advanced Encryption Standard (AES) operates on fixed 128-bit blocks (16 bytes) organized as a $4 \times 4$ byte state matrix in **column-major order**:
-$$\text{state}[r][c] = \text{block}[r + 4c]$$
+**Decryption:**
+$$P_i = (C_i - K_i + 26) \bmod 26$$
 
-AES-128 uses a 128-bit key and executes 10 rounds:
-1. **Key Expansion**: Expands 16-byte key into 11 round keys (44 words of 4 bytes) using `RotWord`, `SubWord`, and round constants `Rcon`.
-2. **Round 0 (Initial)**: `AddRoundKey`
-3. **Rounds 1 to 9 (Standard)**:
-   - `SubBytes`: Non-linear byte substitution using the 256-byte S-box (constructed from multiplicative inverse in $\text{GF}(2^8)$ and affine mapping).
-   - `ShiftRows`: Circular left shifts of matrix rows: row 0 by 0, row 1 by 1, row 2 by 2, row 3 by 3.
-   - `MixColumns`: Matrix multiplication over Galois Field $\text{GF}(2^8)$ modulo irreducible polynomial $m(x) = x^8 + x^4 + x^3 + x + 1$ ($0\text{x}11\text{B}$):
-     $$\begin{bmatrix} s'_{0,c} \\ s'_{1,c} \\ s'_{2,c} \\ s'_{3,c} \end{bmatrix} = \begin{bmatrix} 02 & 03 & 01 & 01 \\ 01 & 02 & 03 & 01 \\ 01 & 01 & 02 & 03 \\ 03 & 01 & 01 & 02 \end{bmatrix} \begin{bmatrix} s_{0,c} \\ s_{1,c} \\ s_{2,c} \\ s_{3,c} \end{bmatrix}$$
-   - `AddRoundKey`: Bitwise XOR of the state with the round key.
-4. **Round 10 (Final)**: `SubBytes` $\to$ `ShiftRows` $\to$ `AddRoundKey` (`MixColumns` omitted).
+where $P_i$ is the plaintext value, $C_i$ is the ciphertext value, and $K_i$ is the key value at position $i$.
 
-**Decryption** executes the exact inverse transformations (`InvShiftRows`, `InvSubBytes`, `InvMixColumns`, `AddRoundKey`) with round keys applied in reverse order.
+- Non-alphabetic characters (spaces, punctuation, digits) are passed through unchanged.
+- Key is normalised to uppercase and all non-alpha characters are stripped.
+- The step trace returns per-character calculations: `"(7 + 10) mod 26 = 17"`.
 
 ---
 
-### 5.3. RSA (Asymmetric Cryptography)
-RSA is an asymmetric public-key cryptosystem based on the computational intractability of factoring large composite semiprimes.
+### 5.2 AES-128 (Symmetric Cryptography — FIPS-197)
 
-#### Mathematical Process:
-1. **Primes Selection**: Select two distinct primes $p$ and $q$.
-2. **Modulus Calculation**:
-   $$n = p \times q$$
-3. **Euler's Totient Function**:
-   $$\phi(n) = (p - 1)(q - 1)$$
-4. **Public Exponent**: Choose integer $e$ such that $1 < e < \phi(n)$ and $\gcd(e, \phi(n)) = 1$.
-5. **Private Exponent**: Compute $d$ using the Extended Euclidean Algorithm:
-   $$e \cdot d \equiv 1 \pmod{\phi(n)} \iff d \equiv e^{-1} \pmod{\phi(n)}$$
-6. **Public Key**: $(e, n)$
-7. **Private Key**: $(d, n)$
-8. **Encryption**: For message block $M < n$:
-   $$C = M^e \bmod n$$
-9. **Decryption**:
-   $$M = C^d \bmod n$$
+Operates on 128-bit (16-byte) blocks arranged as a $4 \times 4$ byte state matrix in **column-major order**:
 
-Intermediate exponentiations are calculated using the **Binary Square-and-Multiply** method to prevent integer overflow and track binary bit iterations.
+$$\text{state}[r][c] = \text{block}[r + 4c], \quad r, c \in \{0, 1, 2, 3\}$$
+
+**Key schedule:** 16-byte key → 44 words → 11 round keys via `RotWord`, `SubWord`, and `Rcon`.
+
+**Encryption (10 rounds):**
+
+| Step | Operations |
+|---|---|
+| Round 0 | `AddRoundKey` |
+| Rounds 1–9 | `SubBytes` → `ShiftRows` → `MixColumns` → `AddRoundKey` |
+| Round 10 | `SubBytes` → `ShiftRows` → `AddRoundKey` *(no MixColumns)* |
+
+**MixColumns** performs matrix multiplication in $\text{GF}(2^8)$ modulo $m(x) = x^8 + x^4 + x^3 + x + 1$ (0x11B):
+
+$$\begin{bmatrix} s'_{0,c} \\ s'_{1,c} \\ s'_{2,c} \\ s'_{3,c} \end{bmatrix} = \begin{bmatrix} 02 & 03 & 01 & 01 \\ 01 & 02 & 03 & 01 \\ 01 & 01 & 02 & 03 \\ 03 & 01 & 01 & 02 \end{bmatrix} \begin{bmatrix} s_{0,c} \\ s_{1,c} \\ s_{2,c} \\ s_{3,c} \end{bmatrix}$$
+
+**Decryption** applies `InvShiftRows → InvSubBytes → AddRoundKey → InvMixColumns` with round keys in reverse order.
+
+> [!NOTE]
+> The S-box is a 256-entry lookup table (a bijective permutation of 0–255) verified to be duplicate-free via `test_sbox_is_valid_bijection()`.
+
+---
+
+### 5.3 RSA (Asymmetric Cryptography)
+
+Based on the computational intractability of factoring large composite numbers.
+
+**Key Generation:**
+1. Choose two distinct primes $p$ and $q$
+2. $n = p \times q$ *(modulus)*
+3. $\phi(n) = (p-1)(q-1)$ *(Euler's Totient)*
+4. Choose $e$ such that $1 < e < \phi(n)$ and $\gcd(e, \phi(n)) = 1$
+5. $d \equiv e^{-1} \pmod{\phi(n)}$ via Extended Euclidean Algorithm
+6. **Public Key** = $(e,\ n)$ ; **Private Key** = $(d,\ n)$
+
+**Encryption:** $C = M^e \bmod n$
+
+**Decryption:** $M = C^d \bmod n$
+
+Exponentiation uses the **Binary Square-and-Multiply** algorithm with a full per-bit trace returned to the frontend.
 
 ---
 
 ## 6. Official AES-128 Known-Answer Test Vector
 
-The AES implementation passes the official NIST FIPS-197 Known-Answer Test (KAT) vector:
+The AES implementation passes the official NIST FIPS-197 Known-Answer Test:
 
-| Parameter | Value (Hexadecimal) |
+| Parameter | Value (hex) |
 |---|---|
-| **Key** | `000102030405060708090a0b0c0d0e0f` |
-| **Plaintext Block** | `00112233445566778899aabbccddeeff` |
-| **Expected Ciphertext** | `69c4e0d86a7b0430d8cdb78070b4c55a` |
-| **Decrypted Output** | `00112233445566778899aabbccddeeff` |
+| Key | `000102030405060708090a0b0c0d0e0f` |
+| Plaintext | `00112233445566778899aabbccddeeff` |
+| **Expected Ciphertext** | **`69c4e0d86a7b0430d8cdb78070b4c55a`** |
+| Decrypted | `00112233445566778899aabbccddeeff` ✓ |
 
-Verified in automated unit test `backend/tests/test_aes.py::test_aes_nist_known_answer_vector_encryption`.
+Verified by `tests/test_aes.py::test_aes_nist_known_answer_vector_encryption`.
 
 ---
 
 ## 7. REST API Documentation
 
-### Base URL: `http://localhost:8000/api/v1`
+Base URL (development): `http://localhost:8000/api/v1`
 
-### 7.1. Health Check
-- **`GET /health`**
-- **Response**:
-  ```json
-  {
-    "status": "ok",
-    "app": "Cryptography Algorithm Visualizer & Demonstrator",
-    "version": "1.0.0",
-    "algorithms": ["vigenere", "aes-128", "rsa"]
-  }
-  ```
+Interactive Swagger UI: [`http://localhost:8000/docs`](http://localhost:8000/docs)
 
-### 7.2. Vigenère Cipher Endpoints
-- **`POST /vigenere/encrypt`**
-  - **Body**: `{"plaintext": "HELLO CNS LAB", "key": "CIPHER"}`
-  - **Response**: `{"mode": "encrypt", "result": "...", "steps": [...]}`
-- **`POST /vigenere/decrypt`**
-  - **Body**: `{"ciphertext": "...", "key": "CIPHER"}`
-  - **Response**: `{"mode": "decrypt", "result": "...", "steps": [...]}`
+### `GET /health`
+```json
+{
+  "status": "ok",
+  "app": "Cryptography Algorithm Visualizer & Demonstrator",
+  "version": "1.0.0",
+  "algorithms": ["vigenere", "aes-128", "rsa"]
+}
+```
 
-### 7.3. AES-128 Endpoints
-- **`POST /aes/encrypt`**
-  - **Body**:
-    ```json
-    {
-      "plaintext_hex": "00112233445566778899aabbccddeeff",
-      "key_hex": "000102030405060708090a0b0c0d0e0f"
-    }
-    ```
-  - **Response**: Returns 11 round traces with 4×4 hexadecimal state matrices for every transformation (`SubBytes`, `ShiftRows`, `MixColumns`, `AddRoundKey`) and the 11-key schedule.
-- **`POST /aes/decrypt`**
-  - **Body**:
-    ```json
-    {
-      "ciphertext_hex": "69c4e0d86a7b0430d8cdb78070b4c55a",
-      "key_hex": "000102030405060708090a0b0c0d0e0f"
-    }
-    ```
+### Vigenère
 
-### 7.4. RSA Endpoints
-- **`POST /rsa/generate-keys`**
-  - **Body**: `{"p": 61, "q": 53, "e": 17}`
-  - **Response**:
-    ```json
-    {
-      "p": 61,
-      "q": 53,
-      "n": 3233,
-      "phi_n": 3120,
-      "e": 17,
-      "d": 2753,
-      "public_key": {"e": 17, "n": 3233},
-      "private_key": {"d": 2753, "n": 3233},
-      "candidate_exponents": [17, 3, 5, 7, 11],
-      "derivation_steps": [...]
-    }
-    ```
-- **`POST /rsa/encrypt`**
-  - **Body**: `{"message": "65", "message_type": "number", "e": 17, "n": 3233}`
-  - **Response**: `{"ciphertext": "2790", "blocks": [...]}`
-- **`POST /rsa/decrypt`**
-  - **Body**: `{"ciphertext": "2790", "message_type": "number", "d": 2753, "n": 3233}`
-  - **Response**: `{"decrypted_message": "65", "blocks": [...]}`
+| Method | Endpoint | Body fields |
+|---|---|---|
+| POST | `/vigenere/encrypt` | `plaintext`, `key` |
+| POST | `/vigenere/decrypt` | `ciphertext`, `key` |
+
+Response includes `mode`, `result`, and `steps[]` (per-character calculation trace).
+
+### AES-128
+
+| Method | Endpoint | Body fields |
+|---|---|---|
+| POST | `/aes/encrypt` | `plaintext_hex` *(32 hex chars)*, `key_hex` *(32 hex chars)* |
+| POST | `/aes/decrypt` | `ciphertext_hex` *(32 hex chars)*, `key_hex` *(32 hex chars)* |
+
+Response includes `ciphertext_hex` / `plaintext_hex`, `key_schedule` (11 round keys), and `rounds[]` — 11 round objects each containing per-operation 4×4 state matrices.
+
+### RSA
+
+| Method | Endpoint | Body fields |
+|---|---|---|
+| POST | `/rsa/generate-keys` | `p`, `q`, `e` *(optional)* |
+| POST | `/rsa/encrypt` | `message`, `message_type` (`"text"` or `"number"`), `e`, `n` |
+| POST | `/rsa/decrypt` | `ciphertext`, `message_type`, `d`, `n` |
+
+**Key generation example:**
+```json
+// POST /rsa/generate-keys
+{ "p": 61, "q": 53, "e": 17 }
+
+// Response
+{
+  "n": 3233, "phi_n": 3120,
+  "e": 17,   "d": 2753,
+  "public_key":  { "e": 17,   "n": 3233 },
+  "private_key": { "d": 2753, "n": 3233 },
+  "derivation_steps": ["Step 1: ...", "Step 2: ...", "..."]
+}
+```
 
 ---
 
-## 8. Installation & Setup Guide
+## 8. Quick Start
 
 ### Prerequisites
-- **Python**: Version 3.10 or higher
-- **Node.js**: Version 18.0 or higher
-- **npm**: Version 9.0 or higher
 
----
+| Requirement | Minimum Version |
+|---|---|
+| Python | 3.10 |
+| Node.js | 18.0 |
+| npm | 9.0 |
 
-### 8.1. Backend Setup
+### Backend
 
 ```bash
-# 1. Open a terminal and enter the backend directory
 cd backend
 
-# 2. Create Python virtual environment
+# Create and activate virtual environment
 python -m venv .venv
 
-# 3. Activate the virtual environment
-# On Windows (PowerShell):
+# Windows (PowerShell)
 .\.venv\Scripts\Activate.ps1
-# On Linux/macOS:
+# macOS / Linux
 source .venv/bin/activate
 
-# 4. Install backend dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# 5. Start the FastAPI backend server
+# Start FastAPI server
 uvicorn app.main:app --reload --port 8000
 ```
-Backend will be live at `http://localhost:8000`. Interactive documentation at `http://localhost:8000/docs`.
 
----
+Backend: [`http://localhost:8000`](http://localhost:8000) · Swagger docs: [`http://localhost:8000/docs`](http://localhost:8000/docs)
 
-### 8.2. Frontend Setup
+### Frontend
 
 ```bash
-# 1. Open a separate terminal and navigate to the frontend directory
+# Open a second terminal
 cd frontend
 
-# 2. Install dependencies
 npm install
-
-# 3. Start Vite development server
 npm run dev
 ```
-Frontend will be accessible at `http://localhost:5173`.
+
+Frontend: [`http://localhost:5173`](http://localhost:5173)
+
+> [!TIP]
+> The Vite dev server proxies all `/api` requests to `http://localhost:8000`, so both services need to be running simultaneously.
 
 ---
 
 ## 9. Running Tests
 
-Run the complete backend test suite to verify cryptographic correctness:
-
 ```bash
 cd backend
-.\.venv\Scripts\pytest
+.\.venv\Scripts\pytest -v
 ```
 
-Output:
+Expected output:
+
 ```text
 ============================= test session starts =============================
-platform win32 -- Python 3.13.0, pytest-9.1.1, pluggy-1.6.0
-collected 27 items
+platform win32 -- Python 3.13.0, pytest-9.1.1
+collected 28 items
 
-tests\test_aes.py .........                                              [ 33%]
-tests\test_api_routes.py ....                                            [ 48%]
-tests\test_rsa.py .......                                                [ 74%]
-tests\test_vigenere.py .......                                           [100%]
+tests/test_aes.py::test_aes_nist_known_answer_vector_encryption PASSED
+tests/test_aes.py::test_aes_nist_known_answer_vector_decryption PASSED
+tests/test_aes.py::test_aes_roundtrip_custom_vectors PASSED
+tests/test_aes.py::test_key_expansion_structure PASSED
+tests/test_aes.py::test_subbytes_invsubbytes_invertibility PASSED
+tests/test_aes.py::test_shiftrows_invshiftrows_invertibility PASSED
+tests/test_aes.py::test_mixcolumns_invmixcolumns_invertibility PASSED
+tests/test_aes.py::test_addroundkey_involution PASSED
+tests/test_aes.py::test_aes_service PASSED
+tests/test_aes.py::test_sbox_is_valid_bijection PASSED
+tests/test_api_routes.py::test_health_endpoint PASSED
+tests/test_api_routes.py::test_vigenere_api PASSED
+tests/test_api_routes.py::test_aes_api PASSED
+tests/test_api_routes.py::test_rsa_api PASSED
+tests/test_rsa.py::test_number_theory_foundations PASSED
+tests/test_rsa.py::test_rsa_keygen_standard_values PASSED
+tests/test_rsa.py::test_rsa_keygen_validation PASSED
+tests/test_rsa.py::test_rsa_numeric_roundtrip PASSED
+tests/test_rsa.py::test_rsa_message_roundtrip PASSED
+tests/test_rsa.py::test_rsa_message_overflow PASSED
+tests/test_rsa.py::test_rsa_service PASSED
+tests/test_vigenere.py::test_key_validation_valid PASSED
+tests/test_vigenere.py::test_key_validation_invalid PASSED
+tests/test_vigenere.py::test_vigenere_classic_vector PASSED
+tests/test_vigenere.py::test_vigenere_case_preservation PASSED
+tests/test_vigenere.py::test_vigenere_steps_content PASSED
+tests/test_vigenere.py::test_vigenere_service PASSED
+tests/test_vigenere.py::test_empty_input_errors PASSED
 
-============================== 27 passed in 0.97s =============================
+============================== 28 passed in 1.12s =============================
 ```
 
-To run individual test suites:
-- `pytest tests/test_vigenere.py`
-- `pytest tests/test_aes.py`
-- `pytest tests/test_rsa.py`
-- `pytest tests/test_api_routes.py`
+Run individual suites:
+
+```bash
+pytest tests/test_vigenere.py    # 7 tests  — Vigenère cipher
+pytest tests/test_aes.py         # 10 tests — AES-128 + NIST KAT + S-box bijection
+pytest tests/test_rsa.py         # 7 tests  — RSA math & crypto
+pytest tests/test_api_routes.py  # 4 tests  — REST API integration
+```
 
 ---
 
 ## 10. Limitations & Future Enhancements
 
-### Limitations
-- **Academic Parameter Scale**: RSA is intentionally demonstrated using small educational primes ($p, q < 1000$) to enable human-readable mathematical tracking. Real-world RSA requires 2048-bit or 4096-bit primes.
-- **Single Block AES**: AES-128 is demonstrated on a single 128-bit block (Electronic Codebook / primitive block transformation) to clearly visualize the $4 \times 4$ state matrix without padding or chaining complexities.
-- **Classical Cipher Insecurity**: Vigenère cipher is vulnerable to Kasiski examination and index of coincidence analysis and is included strictly for pedagogical history.
+### Current Limitations
 
-### Future Enhancements
-- Visual Kasiski examination tool for cracking Vigenère ciphers.
-- Block cipher modes of operation visualizer (CBC, CTR, GCM) with Initialization Vector (IV) propagation.
-- Elliptic Curve Cryptography (ECC) point addition and doubling demonstrator.
-- Diffie-Hellman Key Exchange interactive protocol diagram.
+| Limitation | Reason |
+|---|---|
+| Small RSA primes ($p, q < 10{,}000$) | Educational clarity — human-readable square-and-multiply traces |
+| Single 128-bit AES block | Shows the $4 \times 4$ state matrix without padding or CBC/CTR chaining |
+| Vigenère with ASCII passthrough | Non-alpha characters skipped (spaces, punctuation preserved as-is) |
+| No PKCS padding | Raw textbook RSA — not safe for production use |
+
+### Potential Future Enhancements
+
+- **Block cipher modes**: CBC, CTR, GCM with IV propagation visualisation
+- **Vigenère cryptanalysis**: Kasiski examination & index-of-coincidence attack tool
+- **ECC demo**: Elliptic Curve point addition/doubling over $\mathbb{F}_p$
+- **Diffie-Hellman**: Interactive key exchange protocol diagram
+- **PKCS-compliant padding**: OAEP for RSA, PKCS#7 for AES-CBC
 
 ---
 
 ## 11. Academic Disclaimer
 
 > [!CAUTION]
-> **This application is an educational implementation designed to demonstrate the internal operation of cryptographic algorithms for a Cryptography and Network Security (CNS) assignment.**
+> **This application is an educational implementation designed to demonstrate the internal workings of cryptographic algorithms for a Cryptography and Network Security (CNS) assignment.**
 >
-> It is **not** intended for production-grade cryptographic security. In real-world secure applications, use vetted and audited security standards and implementations (such as AES-GCM and RSA-OAEP with large keys or modern post-quantum cryptography).
+> It is **not** intended for production-grade security. In real-world applications, use audited libraries (e.g. `cryptography` for Python, `SubtleCrypto` for the web) with modern standards: AES-GCM, RSA-OAEP with 2048-bit+ keys, or post-quantum schemes such as ML-KEM (Kyber).

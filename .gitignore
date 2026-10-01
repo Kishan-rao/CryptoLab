@@ -1,8 +1,16 @@
+# =============================================================================
+# CNS-Cryptography-Lab .gitignore
+# Python (FastAPI) + React (Vite) monorepo
+# =============================================================================
+
+# -----------------------------------------------------------------------------
 # Python
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyd
 .Python
 build/
 develop-eggs/
@@ -19,29 +27,137 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-.pytest_cache/
-.coverage
-htmlcov/
+MANIFEST
+
+# Virtual environments
 venv/
 .venv/
 env/
 ENV/
+.env/
 
-# Node / React
+# Environment variable files (never commit secrets)
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+backend/.env
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+nosetests.xml
+test-results/
+
+# MyPy / type-checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Profiling
+*.prof
+*.lprof
+
+# -----------------------------------------------------------------------------
+# Node / React / Vite
+# -----------------------------------------------------------------------------
 node_modules/
 frontend/node_modules/
-.npm
-*.log
+
+# Build output
+frontend/dist/
+frontend/build/
+dist/
+build/
+
+# Vite cache
+frontend/.vite/
+.vite/
+
+# npm / yarn / pnpm logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-frontend/dist/
-frontend/build/
+pnpm-debug.log*
+lerna-debug.log*
+*.log
 
-# IDE / System
+# Lock files (keep package-lock.json / yarn.lock committed; ignore only local overrides)
+# Uncomment the lines below only if your team uses a specific lock file exclusively:
+# yarn.lock
+# pnpm-lock.yaml
+
+# -----------------------------------------------------------------------------
+# IDE / Editor
+# -----------------------------------------------------------------------------
 .vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
 .idea/
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Emacs swap files
 *.swp
 *.swo
+*~
+\#*\#
+.\#*
+
+# JetBrains
+*.iml
+.idea/
+
+# -----------------------------------------------------------------------------
+# OS-Specific
+# -----------------------------------------------------------------------------
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
 Thumbs.db
+Thumbs.db:encdata
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Secrets / certificates (never commit)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/

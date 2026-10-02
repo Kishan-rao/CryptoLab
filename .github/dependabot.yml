@@ -1,16 +1,28 @@
 
 version: 2
 updates:
+  # Frontend npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      react-type-definitions:
+        patterns:
+          - "@types/react"
+          - "@types/react-dom"
+      react-core:
+        patterns:
+          - "react"
+          - "react-dom"
+
+  # Backend pip dependencies
   - package-ecosystem: "pip"
     directory: "/backend"
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "npm"
-    directory: "/frontend"
-    schedule:
-      interval: "weekly"
-
+  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
